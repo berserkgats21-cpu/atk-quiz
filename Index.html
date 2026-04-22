@@ -1,0 +1,447 @@
+import { useState } from "react";
+
+const QUESTIONS = [
+  {
+    id: "name", step: "01",
+    title: "Как тебя зовут?",
+    hint: "Чтобы анализ был обращён лично к тебе",
+    type: "text", placeholder: "Введи имя...",
+    next: () => "gender"
+  },
+  {
+    id: "gender", step: "02", title: "Твой пол", type: "options",
+    opts: [
+      { v: "Женский", e: "👩", l: "Женский" },
+      { v: "Мужской", e: "👨", l: "Мужской" },
+    ],
+    next: () => "age"
+  },
+  {
+    id: "age", step: "03", title: "Сколько тебе лет?", type: "options",
+    opts: [
+      { v: "18-25", e: "🌱", l: "18–25 лет" },
+      { v: "26-35", e: "⚡", l: "26–35 лет" },
+      { v: "36-45", e: "🎯", l: "36–45 лет" },
+      { v: "45+",   e: "🏆", l: "45+ лет" },
+    ],
+    next: () => "goal"
+  },
+  {
+    id: "goal", step: "04", title: "Какая твоя главная цель?", type: "options",
+    opts: [
+      { v: "Похудеть и убрать жир",          e: "🔥", l: "Похудеть и убрать жир",          d: "Хочу видеть результат в зеркале" },
+      { v: "Набрать мышечную массу",          e: "💪", l: "Набрать мышечную массу",          d: "Хочу стать сильнее и объёмнее" },
+      { v: "Подтянуть тело и улучшить форму", e: "✨", l: "Подтянуть тело, форму",           d: "Рельеф, тонус, красивые линии" },
+      { v: "Укрепить здоровье",               e: "❤️", l: "Укрепить здоровье",               d: "Больше энергии, меньше боли" },
+    ],
+    next: () => "training_now"
+  },
+  {
+    id: "training_now", step: "05", title: "Тренируешься сейчас?", type: "options",
+    opts: [
+      { v: "Да, регулярно 3+ раза в неделю", e: "🏋️", l: "Да, регулярно (3+ раза/нед)" },
+      { v: "Да, но редко и нестабильно",      e: "🔄", l: "Да, но нестабильно",  d: "1-2 раза, часто пропускаю" },
+      { v: "Не тренируюсь",                   e: "😴", l: "Нет, не тренируюсь" },
+    ],
+    next: () => "exp_training"
+  },
+  {
+    id: "exp_training", step: "06", title: "Был ли опыт тренировок раньше?", type: "options",
+    opts: [
+      { v: "Никогда не тренировался",                     e: "🆕", l: "Никогда не тренировался" },
+      { v: "Тренировался сам по программам из интернета", e: "📱", l: "Тренировался сам", d: "YouTube, приложения, интернет" },
+      { v: "Тренировался с тренером",                     e: "🤝", l: "Тренировался с тренером" },
+    ],
+    next: (a) => a.exp_training === "Никогда не тренировался" ? "nutrition" : "exp_result"
+  },
+  {
+    id: "exp_result", step: "07", title: "Каким был результат тренировок?", type: "options",
+    opts: [
+      { v: "Достиг цели и держу результат", e: "✅", l: "Достиг цели и держу результат" },
+      { v: "Был прогресс, но откатился",    e: "📉", l: "Был прогресс, но откатился", d: "Всё вернулось когда бросил" },
+      { v: "Прогресс был минимальным",      e: "😕", l: "Прогресс был минимальным" },
+      { v: "Результата не было вообще",     e: "❌", l: "Результата не было вообще" },
+    ],
+    next: (a) => a.exp_result === "Достиг цели и держу результат" ? "nutrition" : "why_failed"
+  },
+  {
+    id: "why_failed", step: "08", title: "Как думаешь, почему не получилось?", hint: "Выбери главную причину", type: "options",
+    opts: [
+      { v: "Не хватило мотивации и дисциплины", e: "😤", l: "Не хватило мотивации и дисциплины" },
+      { v: "Программа не подходила под меня",    e: "📋", l: "Программа не подходила", d: "Слишком сложная или чужая" },
+      { v: "Питание не было выстроено",          e: "🍽️", l: "Питание не было выстроено" },
+      { v: "Травма или проблемы со здоровьем",   e: "🩹", l: "Травма или проблемы со здоровьем" },
+      { v: "Не было времени и сил",              e: "⏰", l: "Не было времени и сил" },
+    ],
+    next: () => "nutrition"
+  },
+  {
+    id: "nutrition", step: "09", title: "Пробовал(а) менять питание ради результата?", type: "options",
+    opts: [
+      { v: "Никогда серьёзно не занимался питанием",    e: "🤷", l: "Никогда серьёзно не занимался" },
+      { v: "Пробовал диеты — не помогло или вернулось", e: "🔁", l: "Пробовал диеты — не помогло", d: "Голодал, считал, потом бросил" },
+      { v: "Слежу за питанием, но результата мало",     e: "🥗", l: "Слежу, но результата мало" },
+      { v: "Питание выстроено, результатом доволен",    e: "✅", l: "Питание выстроено, всё ок" },
+    ],
+    next: () => "place"
+  },
+  {
+    id: "place", step: "10", title: "Где ты можешь тренироваться?", type: "options",
+    opts: [
+      { v: "Зал с тренажёрами",               e: "🏢", l: "Зал с полным оборудованием" },
+      { v: "Дома — есть гантели или резинки",  e: "🏠", l: "Дома — гантели или резинки" },
+      { v: "Дома — только собственный вес",    e: "🧘", l: "Дома — только собственный вес" },
+      { v: "Улица — турник, брусья",           e: "🌳", l: "Улица — турник, брусья" },
+    ],
+    next: () => "time"
+  },
+  {
+    id: "time", step: "11", title: "Сколько времени в неделю готов выделять?", type: "options",
+    opts: [
+      { v: "1-2 часа (1-2 тренировки)",  e: "⏱️", l: "1–2 часа в неделю",  d: "1–2 тренировки" },
+      { v: "3-5 часов (3 тренировки)",   e: "🕐", l: "3–5 часов в неделю",  d: "3 тренировки — золотой стандарт" },
+      { v: "6+ часов (4-5 тренировок)", e: "🔥", l: "6+ часов в неделю",   d: "4–5 тренировок" },
+    ],
+    next: () => "barrier"
+  },
+  {
+    id: "barrier", step: "12", title: "Что сейчас мешает получить результат?", type: "options",
+    opts: [
+      { v: "Не знаю с чего начать",          e: "❓", l: "Не знаю с чего начать" },
+      { v: "Нет системы — срываюсь",          e: "🌀", l: "Нет системы и контроля — срываюсь" },
+      { v: "Делаю, но результата нет",        e: "😞", l: "Делаю, но результата нет" },
+      { v: "Травма или ограничения здоровья", e: "🩹", l: "Травма или ограничения здоровья" },
+      { v: "Финансовый вопрос",               e: "💸", l: "Финансовый вопрос" },
+    ],
+    next: () => "freetext"
+  },
+  {
+    id: "freetext", step: "13",
+    title: "Расскажи своими словами",
+    hint: "Необязательно — но чем больше напишешь, тем точнее анализ",
+    type: "textarea",
+    placeholder: "Что происходит, что пробовал, чего хочешь достичь...",
+    next: () => null
+  },
+];
+
+const TOTAL = QUESTIONS.length;
+
+function getQ(id) { return QUESTIONS.find(q => q.id === id); }
+
+function buildPrompt(answers) {
+  const rows = [
+    ["Имя", answers.name],
+    ["Пол", answers.gender],
+    ["Возраст", answers.age],
+    ["Цель", answers.goal],
+    ["Тренируется сейчас", answers.training_now],
+    ["Опыт тренировок", answers.exp_training],
+    ["Результат опыта", answers.exp_result],
+    ["Почему не получилось", answers.why_failed],
+    ["Опыт с питанием", answers.nutrition],
+    ["Где тренируется", answers.place],
+    ["Время в неделю", answers.time],
+    ["Главный барьер", answers.barrier],
+  ].filter(r => r[1]).map(r => `${r[0]}: ${r[1]}`).join("\n");
+
+  const free = answers.freetext
+    ? `\nСВОИМИ СЛОВАМИ (читай в первую очередь):\n"${answers.freetext}"\n`
+    : "";
+
+  return `Ты — персональный тренер Александр Ткачёв. Напиши персональный разбор для клиента. Пиши как живой тренер — конкретно, по делу, без шаблонов. Обращайся по имени.
+${free}
+ОТВЕТЫ КЛИЕНТА:
+${rows}
+
+Напиши разбор из 4 разделов используя HTML теги h3, p, ul, li:
+1. "Что я вижу в твоей ситуации" — персональный анализ паттернов, 2-3 абзаца
+2. "Главная причина — почему нет результата" — одна чёткая причина с объяснением механики
+3. "Что нужно изменить конкретно" — 3-4 пункта под их цель и возможности
+4. "Твой потенциал" — конкретные реалистичные сроки, мягкий призыв к консультации
+
+Пиши на русском. Тон — прямой, дружелюбный, экспертный. Без воды.`;
+}
+
+export default function App() {
+  const [screen, setScreen] = useState("hero"); // hero | quiz | loading | result | error
+  const [answers, setAnswers] = useState({});
+  const [history, setHistory] = useState([]);
+  const [currentId, setCurrentId] = useState("name");
+  const [textVal, setTextVal] = useState("");
+  const [resultHtml, setResultHtml] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const q = getQ(currentId);
+  const idx = QUESTIONS.findIndex(x => x.id === currentId);
+  const pct = Math.round((idx / TOTAL) * 100);
+  const isLast = q && q.next(answers) === null;
+
+  const canNext = q && (
+    q.type === "textarea" ||
+    (q.type === "text" && textVal.trim().length >= 2) ||
+    (q.type === "options" && answers[currentId])
+  );
+
+  function goTo(id) {
+    const target = getQ(id);
+    if (!target) return;
+    setCurrentId(id);
+    if (target.type === "text") setTextVal(answers[id] || "");
+    else if (target.type === "textarea") setTextVal(answers[id] || "");
+    else setTextVal("");
+  }
+
+  function handleNext() {
+    const updated = { ...answers };
+    if (q.type === "text") updated[currentId] = textVal.trim();
+    else if (q.type === "textarea") updated[currentId] = textVal;
+    setAnswers(updated);
+
+    const nextId = q.next(updated);
+    if (nextId === null) {
+      doSubmit(updated);
+      return;
+    }
+    setHistory(h => [...h, currentId]);
+    goTo(nextId);
+  }
+
+  function handleBack() {
+    if (!history.length) return;
+    const prev = history[history.length - 1];
+    setHistory(h => h.slice(0, -1));
+    goTo(prev);
+  }
+
+  function selectOpt(val) {
+    setAnswers(a => ({ ...a, [currentId]: val }));
+  }
+
+  async function doSubmit(finalAnswers) {
+    setScreen("loading");
+    try {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1500,
+          messages: [{ role: "user", content: buildPrompt(finalAnswers) }]
+        })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error("API " + resp.status + ": " + (data?.error?.message || JSON.stringify(data)));
+      }
+
+      const text = data?.content?.[0]?.text;
+      if (!text) throw new Error("Пустой ответ: " + JSON.stringify(data));
+
+      setResultHtml(text);
+      setScreen("result");
+    } catch (err) {
+      setErrorMsg(err.message);
+      setScreen("error");
+    }
+  }
+
+  // ── STYLES ──────────────────────────────────────────────────
+  const s = {
+    wrap: { background: "#0d0d0d", minHeight: "100vh", color: "#f0ede8", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", maxWidth: 480, margin: "0 auto" },
+    gold: "#c8a96e",
+    // Hero
+    hero: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "48px 24px 64px", minHeight: "100vh" },
+    badge: { border: "1px solid rgba(200,169,110,0.5)", color: "#c8a96e", fontSize: 10, letterSpacing: 3, padding: "7px 18px", borderRadius: 40, textTransform: "uppercase", marginBottom: 28, display: "inline-block" },
+    h1: { fontSize: 32, fontWeight: 800, lineHeight: 1.2, marginBottom: 16 },
+    sub: { fontSize: 15, color: "#777", lineHeight: 1.65, maxWidth: 300, margin: "0 auto 36px" },
+    stats: { display: "flex", justifyContent: "center", gap: 36, marginBottom: 40 },
+    statNum: { fontSize: 32, fontWeight: 800, color: "#c8a96e", display: "block" },
+    statLbl: { fontSize: 10, color: "#555", letterSpacing: 1, display: "block", marginTop: 2 },
+    btnGold: { background: "#c8a96e", border: "none", borderRadius: 10, color: "#0d0d0d", fontSize: 15, fontWeight: 800, padding: "17px 0", width: "100%", maxWidth: 320, cursor: "pointer" },
+    // Quiz header
+    quizTop: { background: "#111", padding: "14px 20px", borderBottom: "1px solid #1e1e1e", position: "sticky", top: 0, zIndex: 10 },
+    progBar: { height: 3, background: "#1e1e1e", borderRadius: 2, marginBottom: 8, overflow: "hidden" },
+    progFill: (p) => ({ height: "100%", background: "#c8a96e", borderRadius: 2, width: p + "%", transition: "width 0.35s ease" }),
+    progTxt: { fontSize: 11, color: "#444", letterSpacing: 1 },
+    // Body
+    body: { padding: "28px 20px 16px", flex: 1 },
+    qNum: { fontSize: 11, color: "#c8a96e", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 },
+    qTitle: { fontSize: 22, fontWeight: 700, lineHeight: 1.3, marginBottom: 8 },
+    qHint: { fontSize: 13, color: "#666", lineHeight: 1.55, marginBottom: 24 },
+    // Option
+    opt: (sel) => ({ background: sel ? "rgba(200,169,110,0.09)" : "#161616", border: "1.5px solid " + (sel ? "#c8a96e" : "#242424"), borderRadius: 10, color: "#f0ede8", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", textAlign: "left", width: "100%", marginBottom: 10 }),
+    optIco: { fontSize: 22, width: 28, flexShrink: 0, textAlign: "center" },
+    optLbl: { fontSize: 14, fontWeight: 600, display: "block" },
+    optDsc: { fontSize: 12, color: "#666", display: "block", marginTop: 2 },
+    optChk: (sel) => ({ width: 22, height: 22, border: "1.5px solid " + (sel ? "#c8a96e" : "#2e2e2e"), borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: sel ? "#c8a96e" : "transparent", color: sel ? "#0d0d0d" : "transparent" }),
+    // Text inputs
+    txtField: { background: "#161616", border: "1.5px solid #242424", borderRadius: 10, color: "#f0ede8", fontFamily: "inherit", fontSize: 16, padding: 16, width: "100%", outline: "none", display: "block", marginBottom: 8 },
+    // Nav
+    nav: { display: "flex", gap: 10, padding: "14px 20px 36px", borderTop: "1px solid #161616" },
+    btnBack: { background: "transparent", border: "1.5px solid #242424", borderRadius: 8, color: "#555", cursor: "pointer", fontSize: 16, padding: "14px 18px" },
+    btnNext: (ok) => ({ background: ok ? "#c8a96e" : "#1e1e1e", border: "none", borderRadius: 8, color: ok ? "#0d0d0d" : "#444", cursor: ok ? "pointer" : "not-allowed", flex: 1, fontSize: 14, fontWeight: 700, padding: 14 }),
+    // Loading
+    loading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 20, textAlign: "center", padding: 40 },
+    // Results
+    resTop: { background: "#111", padding: "44px 24px 28px", borderBottom: "1px solid #1e1e1e", textAlign: "center" },
+    resTag: { fontSize: 10, color: "#c8a96e", letterSpacing: 3, textTransform: "uppercase", marginBottom: 12 },
+    resTitle: { fontSize: 26, fontWeight: 700 },
+    resBody: { padding: "24px 20px" },
+    trainerRow: { display: "flex", alignItems: "center", gap: 14, background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: 16, margin: "4px 20px 24px" },
+    trainerImg: { width: 50, height: 50, borderRadius: "50%", border: "2px solid #c8a96e", objectFit: "cover", flexShrink: 0, background: "#222" },
+    ctaWrap: { background: "#111", borderTop: "1px solid #1e1e1e", padding: "32px 20px 52px", textAlign: "center" },
+    ctaTitle: { fontSize: 22, fontWeight: 700, marginBottom: 10 },
+    ctaSub: { fontSize: 14, color: "#666", lineHeight: 1.6, marginBottom: 24 },
+    ctaBtns: { display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 },
+    ctaTg: { background: "#c8a96e", borderRadius: 10, color: "#0d0d0d", fontSize: 15, fontWeight: 700, padding: 17, textDecoration: "none", display: "block" },
+    ctaIg: { border: "1.5px solid #2a2a2a", borderRadius: 10, color: "#888", fontSize: 14, padding: 16, textDecoration: "none", display: "block" },
+    ctaNote: { fontSize: 11, color: "#444", letterSpacing: 1 },
+    errBox: { background: "rgba(192,57,43,0.1)", border: "1px solid rgba(192,57,43,0.35)", borderRadius: 10, color: "#e74c3c", fontSize: 13, lineHeight: 1.6, padding: 20, margin: 20, textAlign: "center" },
+  };
+
+  // ── HERO ────────────────────────────────────────────────────
+  if (screen === "hero") return (
+    <div style={s.wrap}>
+      <div style={s.hero}>
+        <span style={s.badge}>Персональный анализ · Бесплатно</span>
+        <h1 style={s.h1}>Узнай почему<br/>нет <span style={{ color: s.gold }}>результата</span></h1>
+        <p style={s.sub}>13 вопросов — получишь персональный разбор на основе AI-анализа</p>
+        <div style={s.stats}>
+          <div><span style={s.statNum}>2</span><span style={s.statLbl}>минуты</span></div>
+          <div><span style={s.statNum}>13</span><span style={s.statLbl}>вопросов</span></div>
+          <div><span style={s.statNum}>AI</span><span style={s.statLbl}>анализ</span></div>
+        </div>
+        <button style={s.btnGold} onClick={() => { setHistory([]); setCurrentId("name"); setTextVal(""); setAnswers({}); setScreen("quiz"); }}>
+          Начать анализ →
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── LOADING ─────────────────────────────────────────────────
+  if (screen === "loading") return (
+    <div style={s.wrap}>
+      <div style={s.loading}>
+        <div style={{ width: 44, height: 44, border: "2px solid #1e1e1e", borderTopColor: "#c8a96e", borderRadius: "50%", animation: "spin 0.85s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ fontSize: 20, fontWeight: 700 }}>Анализирую ответы...</div>
+        <div style={{ fontSize: 13, color: "#555" }}>Составляю персональный разбор</div>
+      </div>
+    </div>
+  );
+
+  // ── ERROR ───────────────────────────────────────────────────
+  if (screen === "error") return (
+    <div style={s.wrap}>
+      <div style={s.loading}>
+        <div style={s.errBox}>
+          <strong>Что-то пошло не так</strong><br/><br/>
+          <span style={{ fontSize: 12, opacity: 0.7 }}>{errorMsg}</span><br/><br/>
+          <button style={{ ...s.btnGold, maxWidth: 220, margin: "8px auto 0" }}
+            onClick={() => doSubmit(answers)}>
+            Попробовать снова
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── RESULT ──────────────────────────────────────────────────
+  if (screen === "result") return (
+    <div style={s.wrap}>
+      <div style={s.resTop}>
+        <div style={s.resTag}>Персональный анализ готов</div>
+        <div style={s.resTitle}>
+          {answers.name ? <>Привет, <em style={{ color: s.gold }}>{answers.name}</em></> : "Твой анализ готов"}
+        </div>
+      </div>
+      <div style={s.resBody} dangerouslySetInnerHTML={{ __html: resultHtml }} />
+      <div style={s.trainerRow}>
+        <img style={s.trainerImg}
+          src="https://scontent-sof1-1.cdninstagram.com/v/t51.82787-19/658859805_18388456906083794_7552829756982684678_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-sof1-1.cdninstagram.com&_nc_cat=102&_nc_ohc=fYj24OMTV-UQ7kNvwG4DpiY&_nc_gid=bem19xIUQxePIF4YuzIW5g&edm=APoiHPcBAAAA&ccb=7-5&oh=00_Af0C2sTmgnFpbI178Ubl0sgqNiiRqxTU4XJY1Y59RLjr3w&oe=69E97429&_nc_sid=22de04"
+          onError={e => { e.target.style.background = "#c8a96e"; e.target.src = ""; }}
+          alt="Александр Ткачёв" />
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>Александр Ткачёв</div>
+          <div style={{ fontSize: 12, color: "#555" }}>Персональный тренер · @alex_tcoach</div>
+        </div>
+      </div>
+      <div style={s.ctaWrap}>
+        <div style={s.ctaTitle}>Готов к результату?</div>
+        <div style={s.ctaSub}>Следующий шаг — персональная программа под твои данные и цели</div>
+        <div style={s.ctaBtns}>
+          <a href="https://t.me/Aleksandr_Tka4ev" style={s.ctaTg} target="_blank">✈️ Написать в Telegram</a>
+          <a href="https://www.instagram.com/alex_tcoach/" style={s.ctaIg} target="_blank">📸 Instagram</a>
+        </div>
+        <div style={s.ctaNote}>Бесплатная консультация · Ответ в течение часа</div>
+      </div>
+    </div>
+  );
+
+  // ── QUIZ ────────────────────────────────────────────────────
+  return (
+    <div style={s.wrap}>
+      <div style={s.quizTop}>
+        <div style={s.progBar}><div style={s.progFill(pct)} /></div>
+        <div style={s.progTxt}>Вопрос {idx + 1} из {TOTAL}</div>
+      </div>
+
+      <div style={s.body}>
+        <div style={s.qNum}>Вопрос {q.step}</div>
+        <div style={s.qTitle}>{q.title}</div>
+        {q.hint && <div style={s.qHint}>{q.hint}</div>}
+
+        {q.type === "options" && q.opts.map(o => {
+          const sel = answers[currentId] === o.v;
+          return (
+            <button key={o.v} style={s.opt(sel)} onClick={() => selectOpt(o.v)}>
+              <span style={s.optIco}>{o.e}</span>
+              <div style={{ flex: 1 }}>
+                <span style={s.optLbl}>{o.l}</span>
+                {o.d && <span style={s.optDsc}>{o.d}</span>}
+              </div>
+              <div style={s.optChk(sel)}>{sel ? "✓" : ""}</div>
+            </button>
+          );
+        })}
+
+        {q.type === "text" && (
+          <input
+            style={s.txtField}
+            type="text"
+            placeholder={q.placeholder}
+            value={textVal}
+            onChange={e => setTextVal(e.target.value)}
+            autoComplete="given-name"
+          />
+        )}
+
+        {q.type === "textarea" && (
+          <textarea
+            style={{ ...s.txtField, resize: "none", lineHeight: 1.6, minHeight: 130 }}
+            placeholder={q.placeholder}
+            value={textVal}
+            onChange={e => setTextVal(e.target.value)}
+            rows={5}
+          />
+        )}
+      </div>
+
+      <div style={s.nav}>
+        {history.length > 0 && (
+          <button style={s.btnBack} onClick={handleBack}>←</button>
+        )}
+        <button style={s.btnNext(canNext)} onClick={handleNext} disabled={!canNext}>
+          {isLast ? "Получить анализ →" : "Далее →"}
+        </button>
+      </div>
+    </div>
+  );
+}
