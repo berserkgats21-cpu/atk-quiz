@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Фитнес-анализ — Александр Ткачёв</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background-color: #0d0d0d;
+  color: #f0ede8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* HERO */
+#heroScreen {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px 64px;
+  background-color: #0d0d0d;
+}
+
+.hero-badge {
+  display: inline-block;
+  border: 1px solid rgba(200,169,110,0.5);
+  color: #c8a96e;
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 7px 18px;
+  text-transform: uppercase;
+  border-radius: 40px;
+  margin-bottom: 28px;
+}
+
+.hero-title {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  color: #f0ede8;
+}
+
+.hero-title span { color: #c8a96e; }
+
+.hero-sub {
+  font-size: 15px;
+  color: #777;
+  line-height: 1.65;
+  max-width: 300px;
+  margin: 0 auto 36px;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  margin-bottom: 40px;
+}
+
+.stat-num { font-size: 34px; font-weight: 800; color: #c8a96e; display: block; }
+.stat-label { font-size: 10px; color: #555; letter-spacing: 1px; display: block; margin-top: 2px; }
+
+.btn-gold {
+  background-color: #c8a96e;
+  border: none;
+  border-radius: 10px;
+  color: #0d0d0d;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 18px 0;
+  width: 100%;
+  max-width: 320px;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+
+.btn-gold:active { opacity: 0.85; }
+
+/* QUIZ */
+#quizScreen { background-color: #0d0d0d; }
+
+.quiz-top {
+  background-color: #111;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.prog-bar {
+  height: 3px;
+  background-color: #1e1e1e;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background-color: #c8a96e;
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.prog-text { font-size: 11px; color: #444; letter-spacing: 1px; }
+
+.quiz-body {
+  flex: 1;
+  padding: 28px 20px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.q-num { font-size: 11px; color: #c8a96e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.q-title { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
+.q-hint { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 24px; }
+
+.opts { display: flex; flex-direction: column; gap: 10px; }
+
+.opt {
+  background-color: #161616;
+  border: 1.5px solid #242424;
+  border-radius: 10px;
+  color: #f0ede8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  width: 100%;
+  -webkit-appearance: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.opt:active { background-color: #1e1e1e; }
+.opt.sel { border-color: #c8a96e; background-color: rgba(200,169,110,0.09); }
+
+.opt-ico { font-size: 22px; width: 28px; flex-shrink: 0; text-align: center; }
+.opt-body { flex: 1; }
+.opt-lbl { font-size: 14px; font-weight: 600; display: block; }
+.opt-dsc { font-size: 12px; color: #666; display: block; margin-top: 2px; }
+
+.opt-chk {
+  width: 22px; height: 22px;
+  border: 1.5px solid #2e2e2e;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  color: transparent;
+}
+
+.opt.sel .opt-chk { background-color: #c8a96e; border-color: #c8a96e; color: #0d0d0d; }
+
+.txt-field {
+  background-color: #161616;
+  border: 1.5px solid #242424;
+  border-radius: 10px;
+  color: #f0ede8;
+  font-family: inherit;
+  font-size: 16px;
+  padding: 16px;
+  width: 100%;
+  outline: none;
+  -webkit-appearance: none;
+  display: block;
+}
+
+.txt-field:focus { border-color: #c8a96e; }
+
+textarea.txt-field {
+  resize: none;
+  line-height: 1.6;
+  min-height: 130px;
+}
+
+.quiz-nav {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px 36px;
+  background-color: #0d0d0d;
+  border-top: 1px solid #161616;
+}
+
+.btn-back {
+  background: transparent;
+  border: 1.5px solid #242424;
+  border-radius: 8px;
+  color: #555;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 14px 18px;
+  -webkit-appearance: none;
+}
+
+.btn-next {
+  background-color: #c8a96e;
+  border: none;
+  border-radius: 8px;
+  color: #0d0d0d;
+  cursor: pointer;
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px;
+  -webkit-appearance: none;
+}
+
+.btn-next:disabled { background-color: #1e1e1e; color: #444; }
+.btn-next:not(:disabled):active { opacity: 0.85; }
+
+/* LOADING */
+#loadingScreen {
+  align-items: center;
+  justify-content: center;
+  background-color: #0d0d0d;
+  gap: 20px;
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.spinner {
+  width: 44px; height: 44px;
+  border: 2px solid #1e1e1e;
+  border-top-color: #c8a96e;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.load-title { font-size: 20px; font-weight: 700; }
+.load-sub { font-size: 13px; color: #555; }
+
+/* RESULTS */
+#resultsScreen { background-color: #0d0d0d; }
+
+.res-top {
+  background-color: #111;
+  padding: 44px 24px 28px;
+  border-bottom: 1px solid #1e1e1e;
+  text-align: center;
+}
+
+.res-tag { font-size: 10px; color: #c8a96e; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+.res-title { font-size: 26px; font-weight: 700; }
+.res-title em { color: #c8a96e; font-style: italic; }
+
+.res-body { padding: 24px 20px; }
+
+.res-body h3 {
+  font-size: 17px; font-weight: 700; color: #c8a96e;
+  margin: 28px 0 10px;
+  padding-top: 24px;
+  border-top: 1px solid #1e1e1e;
+}
+
+.res-body h3:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+.res-body p { font-size: 15px; color: #bbb; line-height: 1.75; margin-bottom: 12px; }
+.res-body ul { list-style: none; margin-bottom: 12px; }
+.res-body ul li { font-size: 14px; color: #aaa; line-height: 1.6; padding: 5px 0 5px 18px; position: relative; }
+.res-body ul li::before { content: '—'; position: absolute; left: 0; color: #c8a96e; }
+
+.trainer-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background-color: #141414;
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 4px 20px 24px;
+}
+
+.trainer-img {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  border: 2px solid #c8a96e;
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: #1e1e1e;
+}
+
+.trainer-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.trainer-sub { font-size: 12px; color: #555; }
+
+.cta-wrap {
+  background-color: #111;
+  border-top: 1px solid #1e1e1e;
+  padding: 32px 20px 52px;
+  text-align: center;
+}
+
+.cta-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.cta-sub { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 24px; }
+
+.cta-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+.cta-tg {
+  background-color: #c8a96e;
+  border-radius: 10px;
+  color: #0d0d0d;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 17px;
+  text-decoration: none;
+  display: block;
+}
+
+.cta-ig {
+  border: 1.5px solid #2a2a2a;
+  border-radius: 10px;
+  color: #888;
+  font-size: 14px;
+  padding: 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.cta-note { font-size: 11px; color: #444; letter-spacing: 1px; }
+
+.err-box {
+  background-color: rgba(192,57,43,0.1);
+  border: 1px solid rgba(192,57,43,0.35);
+  border-radius: 10px;
+  color: #e74c3c;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 16px;
+  margin: 20px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="screen active" id="heroScreen">
+  <div class="hero-badge">Персональный анализ · Бесплатно</div>
+  <h1 class="hero-title">Узнай почему<br>нет <span>результата</span></h1>
+  <p class="hero-sub">13 вопросов — и получишь персональный разбор от тренера на основе AI-анализа</p>
+  <div class="hero-stats">
+    <div><span class="stat-num">2</span><span class="stat-label">минуты</span></div>
+    <div><span class="stat-num">13</span><span class="stat-label">вопросов</span></div>
+    <div><span class="stat-num">AI</span><span class="stat-label">анализ</span></div>
+  </div>
+  <button class="btn-gold" id="startBtn">Начать анализ →</button>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-top">
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-text" id="progText">Вопрос 1 из 13</div>
+  </div>
+  <div class="quiz-body" id="quizBody"></div>
+  <div class="quiz-nav" id="quizNav">
+    <button class="btn-back" id="backBtn" style="display:none">←</button>
+    <button class="btn-next" id="nextBtn" disabled>Далее →</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="load-title">Анализирую ответы...</div>
+  <div class="load-sub">Составляю персональный разбор</div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="resultsScreen">
+  <div class="res-top">
+    <div class="res-tag">Персональный анализ готов</div>
+    <div class="res-title" id="resTitle">Твой анализ</div>
+  </div>
+  <div class="res-body" id="resBody"></div>
+  <div class="trainer-row">
+    <img class="trainer-img" id="trainerImg"
+      src="https://scontent-sof1-1.cdninstagram.com/v/t51.82787-19/658859805_18388456906083794_7552829756982684678_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-sof1-1.cdninstagram.com&_nc_cat=102&_nc_oc=Q6cZ2gG4Al3tcFMmSWip5Qy_3_C9wAzXFmYGtQH362FO9CeyNeXkV0igi1gpFSE2HBowxC0&_nc_ohc=fYj24OMTV-UQ7kNvwG4DpiY&_nc_gid=bem19xIUQxePIF4YuzIW5g&edm=APoiHPcBAAAA&ccb=7-5&oh=00_Af0C2sTmgnFpbI178Ubl0sgqNiiRqxTU4XJY1Y59RLjr3w&oe=69E97429&_nc_sid=22de04"
+      onerror="this.style.background='#c8a96e';this.removeAttribute('src')"
+      alt="Александр Ткачёв">
+    <div>
+      <div class="trainer-name">Александр Ткачёв</div>
+      <div class="trainer-sub">Персональный тренер · @alex_tcoach</div>
+    </div>
+  </div>
+  <div class="cta-wrap">
+    <div class="cta-title">Готов к результату?</div>
+    <div class="cta-sub">Следующий шаг — персональная программа под твои данные и цели</div>
+    <div class="cta-btns">
+      <a href="https://t.me/Aleksandr_Tka4ev" class="cta-tg" target="_blank">✈️ Написать в Telegram</a>
+      <a href="https://www.instagram.com/alex_tcoach/" class="cta-ig" target="_blank">📸 Instagram</a>
+    </div>
+    <div class="cta-note">Бесплатная консультация · Ответ в течение часа</div>
+  </div>
+</div>
+
+<script>
+// ── ВОПРОСЫ С ВЕТВЛЕНИЕМ ──────────────────────────────────────
+const QUESTIONS = [
+  {
+    id: 'name', step: '01',
+    title: 'Как тебя зовут?',
+    hint: 'Чтобы анализ был обращён лично к тебе',
+    type: 'text', placeholder: 'Введи имя...',
+    next: () => 'gender'
+  },
+  {
+    id: 'gender', step: '02',
+    title: 'Твой пол',
+    type: 'options',
+    opts: [
+      { v: 'Женский', e: '👩', l: 'Женский' },
+      { v: 'Мужской', e: '👨', l: 'Мужской' },
+    ],
+    next: () => 'age'
+  },
+  {
+    id: 'age', step: '03',
+    title: 'Сколько тебе лет?',
+    type: 'options',
+    opts: [
+      { v: '18-25', e: '🌱', l: '18–25 лет' },
+      { v: '26-35', e: '⚡', l: '26–35 лет' },
+      { v: '36-45', e: '🎯', l: '36–45 лет' },
+      { v: '45+',   e: '🏆', l: '45+ лет' },
+    ],
+    next: () => 'goal'
+  },
+  {
+    id: 'goal', step: '04',
+    title: 'Какая твоя главная цель?',
+    type: 'options',
+    opts: [
+      { v: 'Похудеть и убрать жир',          e: '🔥', l: 'Похудеть и убрать жир',          d: 'Хочу видеть результат в зеркале' },
+      { v: 'Набрать мышечную массу',          e: '💪', l: 'Набрать мышечную массу',          d: 'Хочу стать сильнее и объёмнее' },
+      { v: 'Подтянуть тело и улучшить форму', e: '✨', l: 'Подтянуть тело, улучшить форму', d: 'Рельеф, тонус, красивые линии' },
+      { v: 'Укрепить здоровье',               e: '❤️', l: 'Укрепить здоровье',               d: 'Больше энергии, меньше боли' },
+    ],
+    next: () => 'training_now'
+  },
+  {
+    id: 'training_now', step: '05',
+    title: 'Тренируешься сейчас?',
+    type: 'options',
+    opts: [
+      { v: 'Да, регулярно 3+ раза в неделю', e: '🏋️', l: 'Да, регулярно (3+ раза/нед)' },
+      { v: 'Да, но редко и нестабильно',      e: '🔄', l: 'Да, но нестабильно',             d: '1-2 раза, часто пропускаю' },
+      { v: 'Не тренируюсь',                   e: '😴', l: 'Нет, не тренируюсь' },
+    ],
+    next: () => 'exp_training'
+  },
+  {
+    id: 'exp_training', step: '06',
+    title: 'Был ли опыт тренировок раньше?',
+    type: 'options',
+    opts: [
+      { v: 'Никогда не тренировался',                     e: '🆕', l: 'Никогда не тренировался' },
+      { v: 'Тренировался сам по программам из интернета', e: '📱', l: 'Тренировался сам',         d: 'YouTube, приложения, интернет' },
+      { v: 'Тренировался с тренером',                     e: '🤝', l: 'Тренировался с тренером' },
+    ],
+    // Никогда → пропускаем вопросы про результат и причины
+    next: (a) => a.exp_training === 'Никогда не тренировался' ? 'nutrition' : 'exp_result'
+  },
+  {
+    id: 'exp_result', step: '07',
+    title: 'Каким был результат тренировок?',
+    type: 'options',
+    opts: [
+      { v: 'Достиг цели и держу результат', e: '✅', l: 'Достиг цели и держу результат' },
+      { v: 'Был прогресс, но откатился',    e: '📉', l: 'Был прогресс, но откатился',   d: 'Всё вернулось когда бросил' },
+      { v: 'Прогресс был минимальным',      e: '😕', l: 'Прогресс был минимальным' },
+      { v: 'Результата не было вообще',     e: '❌', l: 'Результата не было вообще' },
+    ],
+    // Достиг → пропускаем "почему не вышло"
+    next: (a) => a.exp_result === 'Достиг цели и держу результат' ? 'nutrition' : 'why_failed'
+  },
+  {
+    id: 'why_failed', step: '08',
+    title: 'Как думаешь, почему не получилось?',
+    hint: 'Выбери главную причину',
+    type: 'options',
+    opts: [
+      { v: 'Не хватило мотивации и дисциплины', e: '😤', l: 'Не хватило мотивации и дисциплины' },
+      { v: 'Программа не подходила под меня',    e: '📋', l: 'Программа не подходила',            d: 'Слишком сложная или чужая' },
+      { v: 'Питание не было выстроено',          e: '🍽️', l: 'Питание не было выстроено' },
+      { v: 'Травма или проблемы со здоровьем',  e: '🩹', l: 'Травма или проблемы со здоровьем' },
+      { v: 'Не было времени и сил',              e: '⏰', l: 'Не было времени и сил' },
+    ],
+    next: () => 'nutrition'
+  },
+  {
+    id: 'nutrition', step: '09',
+    title: 'Пробовал(а) менять питание ради результата?',
+    type: 'options',
+    opts: [
+      { v: 'Никогда серьёзно не занимался питанием',    e: '🤷', l: 'Никогда серьёзно не занимался' },
+      { v: 'Пробовал диеты — не помогло или вернулось', e: '🔁', l: 'Пробовал диеты — не помогло',   d: 'Голодал, считал, потом бросил' },
+      { v: 'Слежу за питанием, но результата мало',     e: '🥗', l: 'Слежу, но результата мало' },
+      { v: 'Питание выстроено, результатом доволен',    e: '✅', l: 'Питание выстроено, всё ок' },
+    ],
+    next: () => 'place'
+  },
+  {
+    id: 'place', step: '10',
+    title: 'Где ты можешь тренироваться?',
+    type: 'options',
+    opts: [
+      { v: 'Зал с тренажёрами',              e: '🏢', l: 'Зал с полным оборудованием' },
+      { v: 'Дома — есть гантели или резинки', e: '🏠', l: 'Дома — гантели или резинки' },
+      { v: 'Дома — только собственный вес',   e: '🧘', l: 'Дома — только собственный вес' },
+      { v: 'Улица — турник, брусья',          e: '🌳', l: 'Улица — турник, брусья' },
+    ],
+    next: () => 'time'
+  },
+  {
+    id: 'time', step: '11',
+    title: 'Сколько времени в неделю готов выделять?',
+    type: 'options',
+    opts: [
+      { v: '1-2 часа (1-2 тренировки)',  e: '⏱️', l: '1–2 часа в неделю',  d: '1–2 тренировки' },
+      { v: '3-5 часов (3 тренировки)',   e: '🕐', l: '3–5 часов в неделю',  d: '3 тренировки — золотой стандарт' },
+      { v: '6+ часов (4-5 тренировок)', e: '🔥', l: '6+ часов в неделю',   d: '4–5 тренировок' },
+    ],
+    next: () => 'barrier'
+  },
+  {
+    id: 'barrier', step: '12',
+    title: 'Что сейчас мешает получить результат?',
+    type: 'options',
+    opts: [
+      { v: 'Не знаю с чего начать',          e: '❓', l: 'Не знаю с чего начать' },
+      { v: 'Нет системы — срываюсь',          e: '🌀', l: 'Нет системы и контроля — срываюсь' },
+      { v: 'Делаю, но результата нет',        e: '😞', l: 'Делаю, но результата нет' },
+      { v: 'Травма или ограничения здоровья', e: '🩹', l: 'Травма или ограничения здоровья' },
+      { v: 'Финансовый вопрос',               e: '💸', l: 'Финансовый вопрос' },
+    ],
+    next: () => 'freetext'
+  },
+  {
+    id: 'freetext', step: '13',
+    title: 'Расскажи своими словами',
+    hint: 'Необязательно — но чем больше напишешь, тем точнее анализ. Что происходит, что пробовал, чего хочешь.',
+    type: 'textarea',
+    placeholder: 'Например: тренировалась год назад, сбросила 5 кг, потом бросила из-за работы и всё вернулось...',
+    next: () => null
+  },
+];
+
+// ── СОСТОЯНИЕ ────────────────────────────────────────────────
+const answers = {};
+let history = [];
+let currentId = null;
+
+// ── ЭКРАНЫ ───────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── РЕНДЕР ВОПРОСА ───────────────────────────────────────────
+function getQ(id) { return QUESTIONS.find(q => q.id === id); }
+
+function render(id) {
+  const q = getQ(id);
+  if (!q) return;
+  currentId = id;
+
+  const idx = QUESTIONS.findIndex(x => x.id === id);
+  const total = QUESTIONS.length;
+  document.getElementById('progFill').style.width = (idx / total * 100) + '%';
+  document.getElementById('progText').textContent = `Вопрос ${idx + 1} из ${total}`;
+  document.getElementById('backBtn').style.display = history.length ? 'block' : 'none';
+
+  const nextBtn = document.getElementById('nextBtn');
+  const isLast = q.next(answers) === null;
+  nextBtn.textContent = isLast ? 'Получить анализ →' : 'Далее →';
+  nextBtn.disabled = true;
+
+  let html = `<div class="q-num">Вопрос ${q.step}</div>
+    <div class="q-title">${q.title}</div>
+    ${q.hint ? `<div class="q-hint">${q.hint}</div>` : ''}`;
+
+  if (q.type === 'options') {
+    const saved = answers[id];
+    html += '<div class="opts">';
+    q.opts.forEach(o => {
+      const sel = saved === o.v ? 'sel' : '';
+      html += `<button class="opt ${sel}" data-val="${o.v}">
+        <span class="opt-ico">${o.e}</span>
+        <div class="opt-body">
+          <span class="opt-lbl">${o.l}</span>
+          ${o.d ? `<span class="opt-dsc">${o.d}</span>` : ''}
+        </div>
+        <div class="opt-chk">${sel ? '✓' : ''}</div>
+      </button>`;
+    });
+    html += '</div>';
+    if (saved) nextBtn.disabled = false;
+
+  } else if (q.type === 'text') {
+    const val = answers[id] || '';
+    html += `<input type="text" class="txt-field" id="txtF" placeholder="${q.placeholder}" value="${val}" autocomplete="given-name">`;
+    if (val.length >= 2) nextBtn.disabled = false;
+
+  } else if (q.type === 'textarea') {
+    const val = answers[id] || '';
+    html += `<textarea class="txt-field" id="taF" placeholder="${q.placeholder}" rows="5">${val}</textarea>`;
+    nextBtn.disabled = false; // необязательно
+  }
+
+  document.getElementById('quizBody').innerHTML = html;
+
+  // Навешиваем события
+  if (q.type === 'options') {
+    document.querySelectorAll('.opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.opt').forEach(b => {
+          b.classList.remove('sel');
+          b.querySelector('.opt-chk').textContent = '';
+        });
+        btn.classList.add('sel');
+        btn.querySelector('.opt-chk').textContent = '✓';
+        answers[id] = btn.dataset.val;
+        document.getElementById('nextBtn').disabled = false;
+      });
+    });
+  }
+
+  if (q.type === 'text') {
+    const f = document.getElementById('txtF');
+    f.addEventListener('input', () => {
+      answers[id] = f.value.trim();
+      document.getElementById('nextBtn').disabled = answers[id].length < 2;
+    });
+    setTimeout(() => f.focus(), 100);
+  }
+
+  if (q.type === 'textarea') {
+    const f = document.getElementById('taF');
+    f.addEventListener('input', () => { answers[id] = f.value; });
+  }
+
+  document.getElementById('quizBody').scrollTop = 0;
+}
+
+// ── КНОПКИ ───────────────────────────────────────────────────
+document.getElementById('nextBtn').addEventListener('click', () => {
+  const q = getQ(currentId);
+  // сохраняем textarea
+  const ta = document.getElementById('taF');
+  if (ta) answers[currentId] = ta.value;
+
+  const nextId = q.next(answers);
+  if (nextId === null) { submit(); return; }
+  history.push(currentId);
+  render(nextId);
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  if (!history.length) return;
+  render(history.pop());
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  history = [];
+  showScreen('quizScreen');
+  render('name');
+});
+
+// ── ПРОМПТ ───────────────────────────────────────────────────
+function buildPrompt() {
+  const rows = [
+    ['Имя',                  answers.name],
+    ['Пол',                  answers.gender],
+    ['Возраст',              answers.age],
+    ['Цель',                 answers.goal],
+    ['Тренируется сейчас',   answers.training_now],
+    ['Опыт тренировок',      answers.exp_training],
+    ['Результат опыта',      answers.exp_result],
+    ['Почему не получилось', answers.why_failed],
+    ['Опыт с питанием',      answers.nutrition],
+    ['Где тренируется',      answers.place],
+    ['Время в неделю',       answers.time],
+    ['Главный барьер',       answers.barrier],
+  ].filter(r => r[1]).map(r => `${r[0]}: ${r[1]}`).join('\n');
+
+  const free = answers.freetext
+    ? `\nСВОИМИ СЛОВАМИ (читай в первую очередь):\n"${answers.freetext}"\n`
+    : '';
+
+  return `Ты — персональный тренер Александр Ткачёв. Напиши персональный разбор для клиента. Пиши как живой тренер — конкретно, по делу, без шаблонов. Обращайся по имени.
+${free}
+ОТВЕТЫ КЛИЕНТА:
+${rows}
+
+СТРУКТУРА ОТВЕТА — используй HTML теги h3, p, ul, li для форматирования:
+
+Раздел 1 — "Что я вижу в твоей ситуации": персональный анализ, называй конкретные паттерны этого человека, 2-3 абзаца.
+
+Раздел 2 — "Главная причина — почему нет результата": одна чёткая причина именно для этого человека, объясни механику.
+
+Раздел 3 — "Что нужно изменить конкретно": 3-4 пункта под их цель, оборудование и время. Не generic.
+
+Раздел 4 — "Твой потенциал": что реально возможно при правильном подходе, конкретные сроки, мягкий призыв к консультации.
+
+Пиши на русском. Тон — прямой, дружелюбный, экспертный. Без воды.`;
+}
+
+// ── ОТПРАВКА ─────────────────────────────────────────────────
+function showLoading() {
+  showScreen('loadingScreen');
+  document.getElementById('loadingScreen').innerHTML = `
+    <div class="spinner"></div>
+    <div class="load-title">Анализирую ответы...</div>
+    <div class="load-sub">Составляю персональный разбор</div>`;
+}
+
+function showError(msg) {
+  document.getElementById('loadingScreen').innerHTML = `
+    <div class="err-box">
+      <strong>Что-то пошло не так</strong><br><br>
+      <span style="font-size:12px;color:#aaa;display:block;margin-bottom:16px">${msg}</span>
+      <button class="btn-gold" onclick="showLoading();submit()" style="max-width:220px;margin:0 auto;display:block">
+        Попробовать снова
+      </button>
+    </div>`;
+}
+
+async function submit() {
+  showLoading();
+
+  let prompt;
+  try {
+    prompt = buildPrompt();
+  } catch(e) {
+    showError('Ошибка сборки промпта: ' + e.message);
+    return;
+  }
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    let data;
+    try {
+      data = await resp.json();
+    } catch(e) {
+      showError('Сервер вернул нечитаемый ответ (статус ' + resp.status + ')');
+      return;
+    }
+
+    if (!resp.ok) {
+      showError('API ошибка ' + resp.status + ': ' + (data?.error?.message || JSON.stringify(data)));
+      return;
+    }
+
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      showError('Пустой ответ от API. Ответ: ' + JSON.stringify(data).slice(0, 200));
+      return;
+    }
+
+    const text = data.content[0].text;
+    const name = answers.name || '';
+
+    document.getElementById('resTitle').innerHTML =
+      name ? `Привет, <em>${name}</em>` : 'Твой анализ готов';
+    document.getElementById('resBody').innerHTML = text;
+    showScreen('resultsScreen');
+
+  } catch(err) {
+    // Сетевая ошибка (CORS, нет интернета и т.д.)
+    showError('Сетевая ошибка: ' + err.message + '. Проверь подключение к интернету.');
+  }
+}
+</script>
+</body>
+</html>
